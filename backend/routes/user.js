@@ -90,9 +90,33 @@ userRouter.post("/signin", logger, async (req, res) => {
   console.log(user.email);
 });
 
-userRouter.get("/me", auth, async (req, res) => {
+userRouter.get("/me", logger, auth, async (req, res) => {
   console.log("logged in to dashboard");
   res.json({
     message: "Dashboard",
+  });
+});
+
+userRouter.put("/", logger, auth, async (req, res) => {
+  const { username, email, password } = req.body;
+
+  const updateBody = zod.object({
+    username: z.string().min(3).max(20),
+    email: z.string().email().min(3).max(100),
+    password: z.string().min(8).max(30),
+  });
+
+  const parsedDataWithSuccess = updateBody.safeParse(req.body);
+
+  if (!parsedDataWithSuccess) {
+    res.status(411).json({
+      message: "Error while updating information",
+    });
+  }
+
+  const newUser = await userModel.updateOne({ _id: req.userId }, req.body);
+
+  res.json({
+    message: "Updated successfully",
   });
 });
